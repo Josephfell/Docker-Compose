@@ -124,3 +124,21 @@ You should see the VPN IP, not your home IP.
 
 Confirm NAS mount is accessible:
 docker exec -it sonarr ls -la /share
+
+⚖️ Legal Notice
+
+This configuration is provided for personal, lawful, and ethical use only.
+You are solely responsible for ensuring that your use of the services in this stack—such as qBittorrent, Sonarr, Radarr, Prowlarr, and Gluetun—complies with all applicable local, national, and international laws.
+
+The authors and contributors of this configuration do not endorse or encourage the downloading, sharing, or distribution of copyrighted content without permission.
+Any use of this stack to access or distribute illegal or copyrighted material may violate copyright laws and could result in civil or criminal penalties.
+
+By using this configuration, you agree that:
+
+You will use it only for legally obtained media.
+
+You assume full responsibility for all activity performed through your network and devices.
+
+The authors, maintainers, and distributors of this configuration are not liable for any misuse, data loss, damage, legal claims, or violations arising from its use.
+
+If you are unsure whether a specific use is legal in your jurisdiction, you should consult a qualified legal professional.
