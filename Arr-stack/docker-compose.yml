@@ -1,0 +1,123 @@
+version: "3"
+
+volumes:
+  network_nas:
+    driver_opts:
+      type: cifs
+      # Mount options for the NAS share (Replace Username and Password with your actual NAS credentials)
+      o: "username=Username,password=Password,uid=1000,gid=1000,file_mode=0777,dir_mode=0777"
+      device: "//0.0.0.0/share"  # Replace with your NAS IP and share name
+
+services:
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    # Hostname to use for container, required in some instances for the rest of the stack to each other endpoints 
+    hostname: gluetun
+    # line above must be uncommented to allow external containers to connect.
+    # See https://github.com/qdm12/gluetun-wiki/blob/main/setup/connect-a-container-to-gluetun.md#external-container-to-gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - 6881:6881
+      - 6881:6881/udp
+      - 8085:8085 # qbittorrent
+      - 8989:8989 # Sonarr
+      - 9696:9696 # Prowlarr
+      - 7878:7878 # Radarr
+      - 5058:5058 # Overseerr
+    volumes:
+    #  - /path/to/your/gluetun/config:/gluetun
+      - /home/user/docker/arr-stack/gluetun:/gluetun
+    environment:
+    # Vpn configuration variables - replace with your own credentials
+      - VPN_SERVICE_PROVIDER=
+      - OPENVPN_USER=
+      - OPENVPN_PASSWORD=
+      - SERVER_COUNTRIES=
+      
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent
+    container_name: qbittorrent
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - WEBUI_PORT=8085
+    volumes:
+    #replace with your own paths
+      - /home/user/docker/arr-stack/qbittorrent:/config
+      - /home/user/docker/arr-stack/qbittorrent/downloads:/downloads
+    # Mount NAS share for media storage
+      - network_nas:/share/
+    depends_on:
+      - gluetun
+    restart: always
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+    #replace with your own paths
+      - /home/user/docker/arr-stack/sonarr/data:/config
+      - network_nas:/share/
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    network_mode: "service:gluetun"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+    #replace with your own paths
+      - /home/user/docker/arr-stack/prowlarr/data:/config
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+
+  radarr:
+      image: lscr.io/linuxserver/radarr:latest
+      container_name: radarr
+      network_mode: "service:gluetun"
+      environment:
+        - PUID=1000
+        - PGID=1000
+        - TZ=Etc/UTC
+      volumes:
+      #replace with your own paths
+        - /home/user/docker/arr-stack/radarr/data:/config
+        - network_nas:/share/
+      depends_on:
+      - gluetun
+      restart: unless-stopped
+
+  overseerr:
+    image: sctx/overseerr:latest
+    container_name: overseerr
+    network_mode: "service:gluetun"
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=Europe/London
+      - PORT=5058 #optional
+    volumes:
+    #replace with your own paths
+      - /home/user/docker/arr-stack/config:/app/config
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+
+      
+      
